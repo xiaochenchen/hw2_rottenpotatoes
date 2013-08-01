@@ -7,6 +7,8 @@ class MoviesController < ApplicationController
   end
 
   def index
+    @all_ratings = Movie.all_ratings
+
     key = params[:key]
     case key
     when 'title'
@@ -14,7 +16,21 @@ class MoviesController < ApplicationController
     when 'release_date'
       @release_date_class = 'hilite'
     end
-    @movies = Movie.order(key)
+    
+    #@movies = Movie.where(rating: ratings).order(key)
+    if params[:commit] == 'Refresh'
+      @ratings = params[:ratings].nil? ? {} : params[:ratings]
+      session[:ratings] = @ratings
+    else
+      @ratings = session[:ratings] unless key.nil?
+    end
+
+    if @ratings.nil?
+      @movies = Movie.order(key)
+    else
+      @movies = Movie.where(rating: @ratings.keys).order(key)
+    end
+    
   end
 
   def new
