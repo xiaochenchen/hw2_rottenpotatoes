@@ -7,28 +7,42 @@ class MoviesController < ApplicationController
   end
 
   def index
-    @all_ratings = Movie.all_ratings
 
-    key = params[:key]
-    case key
+    # find all possible ratings in database
+    @all_ratings = Movie.all_ratings        
+
+    if params[:order].nil?
+      @order = session[:order]
+      redirect = true unless session[:order].nil?
+    else
+      session[:order] = params[:order]
+      @order = params[:order]
+    end
+
+    # highlight column name the order is based upon
+    case @order
     when 'title'
       @title_class = 'hilite'
     when 'release_date'
       @release_date_class = 'hilite'
     end
     
-    #@movies = Movie.where(rating: ratings).order(key)
-    if params[:commit] == 'Refresh'
-      @ratings = params[:ratings].nil? ? {} : params[:ratings]
-      session[:ratings] = @ratings
+    if params[:ratings].nil?
+      @ratings = session[:ratings]
+      redirect = true unless session[:ratings].nil?       
     else
-      @ratings = session[:ratings] unless key.nil?
+      session[:ratings] = params[:ratings]
+      @ratings = params[:ratings]
+    end
+
+    if redirect
+      redirect_to movies_path( { :order => @order, :ratings => @ratings } ) unless @ratings.nil?
     end
 
     if @ratings.nil?
-      @movies = Movie.order(key)
+      @movies = Movie.order(@order)
     else
-      @movies = Movie.where(rating: @ratings.keys).order(key)
+      @movies = Movie.where(rating: @ratings.keys).order(@order)
     end
     
   end
